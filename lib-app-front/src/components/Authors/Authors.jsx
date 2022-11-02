@@ -11,9 +11,12 @@ function Authors() {
 
   React.useEffect(() => {
     async function getAuthors() {
-      const data = await getData("author");
-      setAuthors(data.recordset);
-      dispatch({ type: "SET_AUTHORS", payload: data.recordset });
+      if (state.authors.length !== 0) setAuthors(state.authors);
+      else {
+        const data = await getData("author");
+        setAuthors(data.recordset);
+        dispatch({ type: "SET_AUTHORS", payload: data.recordset });
+      }
     }
     getAuthors();
   }, []);

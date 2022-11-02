@@ -1,21 +1,22 @@
 import express, { json } from "express";
+import cors from "cors";
 import mssql from "mssql/msnodesqlv8.js";
 import format from "date-format";
 
 const app = express();
 let connect;
 
-app.use(json());
+app.use(
+  json({
+    type: ["application/json", "text/plain", "charset=utf-8"],
+  }),
+  cors()
+);
 
 // GET запрос на получение дыннах таблицы
 app.get("/:table", async (req, res) => {
   const table = req.params.table;
   return await connect.query(`select * from ${table};`).then((resp) => {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      "origin, content-type, acept"
-    );
     res.send(resp);
   });
 });
@@ -31,7 +32,7 @@ app.post("/author/new", async (req, res) => {
     typeof author_name == "string" &&
     Object.keys(req.body).length == 2
   ) {
-    await connection.query(
+    await connect.query(
       `INSERT INTO author(author_name, author_birthday) VALUES('${author_name}', '${author_birthday}');`
     );
     return res.status(201).json({ message: "Автор успешно создан" });
@@ -54,9 +55,30 @@ app.post("/genre/new", async (req, res) => {
   } else return res.status(400).json({ message: "Что-то пошло не так" });
 });
 
-// PUT возврат книги
-app.put("/mybook/:id_book/return", async (req, res) => {
+// POST выдать книгу
+app.post("/books/:id_book/give", async (req, res) => {
   const id = req.params.id_book;
+  const reader = req.body.reader;
+  const amount = req.body.amount;
+
+  // if (id && reader && amount && Object.keys(req.body).length == 2) {
+  return await connect
+    .query(
+      `INSERT INTO moving_b(book_id, reader_id, amount) VALUES(${id}, ${reader}, ${amount})`
+    )
+    .then((resp) => {
+      res.send(resp);
+    });
+  // } else {
+  //   res.status(400).json({ message: "Что-то пошло не так" });
+  // }
+});
+
+// PUT возврат книги
+app.put("/book/:id_moving/return", async (req, res) => {
+  console.log(res.header);
+
+  const id = req.params.id_moving;
   const date_return = format("yyyy-MM-dd", new Date(req.body.date));
   const now = format("yyyy-MM-dd", new Date());
   const isReturned = await connect.query(
@@ -72,6 +94,8 @@ app.put("/mybook/:id_book/return", async (req, res) => {
     await connect.query(
       `UPDATE moving_b SET date_fact = '${date_return}' WHERE moving_id = ${id};`
     );
+
+    // res.setHeader("content-type", "application/json");
     return res.status(200).json({ message: "Книга успешно возвращена" });
   } else return res.status(400).json({ message: "Что-то пошло не так" });
 });

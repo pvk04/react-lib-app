@@ -1,6 +1,7 @@
 import React from "react";
 import { AppContext } from "../../contexts/context";
-import { getData } from "../../fetches/getData.fetch";
+import { getData } from "../../fetches/getData.fetch.js";
+import { returnBook } from "../../fetches/returnBook.fetch.js";
 import { formateDate } from "../../utils/formatDate.util";
 
 function MovingBooks() {
@@ -21,8 +22,9 @@ function MovingBooks() {
     }
   }
 
-  function returnBook(moving_id) {
-    // TODO
+  async function bookReturn(moving_id) {
+    const resp = await returnBook(moving_id);
+    alert(resp.message);
   }
 
   React.useEffect(() => {
@@ -56,22 +58,34 @@ function MovingBooks() {
     <div>
       <ul>
         {moving.map((element, id) => {
-          return (
-            <li key={id}>
-              <p>Книга: {renderBook(element.book_id)}</p>
-              <p>Читатель: {renderReader(element.reader_id)}</p>
-              <p>Количество: {element.amount}</p>
-              <p>Дата взятия: {formateDate(element.date_out)}</p>
-              <p>Дата возврата: {formateDate(element.date_in)}</p>
-              <p>
-                Дата фактического возврата:{" "}
-                {element.date_fact
-                  ? formateDate(element.date_fact)
-                  : "еще не вернули"}
-              </p>
-              {!element.date_fact ? <button>Вернуть</button> : ""}
-            </li>
-          );
+          if (!element.date_fact) {
+            return (
+              <li key={id}>
+                <p>Книга: {renderBook(element.book_id)}</p>
+                <p>Читатель: {renderReader(element.reader_id)}</p>
+                <p>Количество: {element.amount}</p>
+                <p>Дата взятия: {formateDate(element.date_out)}</p>
+                <p>Дата возврата: {formateDate(element.date_in)}</p>
+                <p>
+                  Дата фактического возврата:{" "}
+                  {element.date_fact
+                    ? formateDate(element.date_fact)
+                    : "еще не вернули"}
+                </p>
+                {!element.date_fact ? (
+                  <button
+                    onClick={() => {
+                      bookReturn(element.moving_id);
+                    }}
+                  >
+                    Вернуть
+                  </button>
+                ) : (
+                  ""
+                )}
+              </li>
+            );
+          }
         })}
       </ul>
     </div>
